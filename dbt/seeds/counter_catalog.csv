@@ -1,0 +1,15 @@
+counter_id,name,description,kpi_group,unit
+1,RRC_CONN_SETUP_ATT,RRC Connection Setup attempts,accessibility,count
+2,RRC_CONN_SETUP_SUCC,RRC Connection Setup successes,accessibility,count
+3,ERAB_ESTAB_ATT_INIT,Initial E-RAB establishment attempts,accessibility,count
+4,ERAB_ESTAB_SUCC_INIT,Initial E-RAB establishment successes,accessibility,count
+5,ERAB_ESTAB_ATT_ADDED,Added E-RAB establishment attempts,accessibility,count
+6,ERAB_ESTAB_SUCC_ADDED,Added E-RAB establishment successes,accessibility,count
+7,ERAB_REL_NORMAL_ENB,E-RAB normal releases by eNB,retainability,count
+8,ERAB_REL_ABNORMAL_ENB,E-RAB abnormal releases by eNB,retainability,count
+9,HO_EXEC_ATT_INTRA_LTE,Intra-LTE handover execution attempts,mobility,count
+10,HO_EXEC_SUCC_INTRA_LTE,Intra-LTE handover execution successes,mobility,count
+11,PDCP_VOL_DL_DRB,PDCP DL data volume on DRB,integrity,kbits
+12,UE_THP_TIME_DL,UE active time DL for throughput calculation,integrity,seconds
+13,CELL_DOWNTIME_AUTO,Cell unavailable time (automatic),availability,seconds
+14,CELL_DOWNTIME_MAN,Cell unavailable time (planned/manual),availability,seconds

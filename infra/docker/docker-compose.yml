@@ -1,0 +1,60 @@
+name: telcoscope
+
+services:
+  postgres:
+    image: timescale/timescaledb:latest-pg16
+    container_name: telcoscope-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-telcoscope}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-telcoscope}
+      POSTGRES_DB: ${POSTGRES_DB:-telcoscope}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-telcoscope}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  grafana:
+    image: grafana/grafana:11.2.0
+    container_name: telcoscope-grafana
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      GF_INSTALL_PLUGINS: ""
+    ports:
+      - "${GRAFANA_PORT:-3000}:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ../grafana/provisioning:/etc/grafana/provisioning:ro
+      - ../grafana/dashboards:/var/lib/grafana/dashboards:ro
+
+  adminer:
+    image: adminer:4.8.1
+    container_name: telcoscope-adminer
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      ADMINER_DEFAULT_SERVER: postgres
+      ADMINER_DESIGN: pepa-linha
+    ports:
+      - "${ADMINER_PORT:-8080}:8080"
+
+volumes:
+  postgres_data:
+    name: telcoscope-postgres-data
+  grafana_data:
+    name: telcoscope-grafana-data

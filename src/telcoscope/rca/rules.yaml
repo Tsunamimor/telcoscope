@@ -1,0 +1,107 @@
+# telcoscope RCA rule library
+#
+# Each rule is evaluated against an anomaly's context (concurrent FM alarms,
+# recent CM changes, neighbour-cell anomalies). Matching rules contribute
+# weighted hypotheses to the incident's ranked RCA output.
+#
+# Rule schema (see src/telcoscope/rca/schema.py for full validation):
+#
+#   id:                 unique rule identifier (string)
+#   name:               short human-readable description
+#   kpis_affected:      list of KPI logical names that this rule matches against
+#   triggers:           list of triggers ALL of which must hold for the rule to fire
+#     - alarm_pattern:  regex or simple string match against fm_alarms.alarm_type
+#       within_minutes: time window relative to the anomaly's timestamp
+#       severity_min:   minimum alarm severity (warning|minor|major|critical)
+#       scope:          'same_cell' | 'same_enb' | 'same_region'
+#     - cm_change_within_minutes: int — fires if any CM change within this window
+#       parameter:      optional parameter name filter
+#       scope:          'same_cell' | 'same_enb'
+#     - neighbour_anomalies_min: int — fires if ≥ N neighbour cells also anomalous
+#       within_minutes: time window
+#   likely_cause:       short description of the suspected cause
+#   confidence:         float in [0,1] — base confidence if all triggers match
+#   suggested_actions:  list of operational steps for the on-call engineer
+
+rules:
+  - id: rca_001
+    name: "Accessibility drop with S1 transport failure"
+    kpis_affected:
+      - rrc_conn_setup_sr
+      - erab_setup_sr
+    triggers:
+      - alarm_pattern: "S1.*(LINK_DOWN|FAILURE|UNAVAILABLE)"
+        within_minutes: 15
+        severity_min: "major"
+        scope: "same_enb"
+    likely_cause: "S1 transport degradation between eNB and EPC"
+    confidence: 0.85
+    suggested_actions:
+      - "Check S1 transport link status and recent error counters"
+      - "Verify EPC reachability from affected eNB"
+      - "Escalate to transport team if alarm persists > 5 min"
+
+  - id: rca_002
+    name: "Retainability degradation with hardware/board alarm"
+    kpis_affected:
+      - erab_drop_rate
+    triggers:
+      - alarm_pattern: "(BOARD|RRU|RU)_.*(FAULT|FAILURE|TEMPERATURE)"
+        within_minutes: 30
+        severity_min: "minor"
+        scope: "same_cell"
+    likely_cause: "Hardware degradation on serving cell radio equipment"
+    confidence: 0.75
+    suggested_actions:
+      - "Inspect physical/environmental conditions at site"
+      - "Review board temperature and power trends"
+      - "Schedule preventive replacement if pattern persists"
+
+  - id: rca_003
+    name: "KPI step change immediately following CM parameter modification"
+    kpis_affected:
+      - rrc_conn_setup_sr
+      - erab_drop_rate
+      - intra_lte_ho_sr
+      - dl_user_throughput
+    triggers:
+      - cm_change_within_minutes: 60
+        scope: "same_cell"
+    likely_cause: "Recent configuration change may have introduced regression"
+    confidence: 0.60
+    suggested_actions:
+      - "Identify the most recent CM change on the affected cell"
+      - "Compare KPI baseline pre/post change"
+      - "Consider rollback if KPI degradation correlates strongly"
+
+  - id: rca_004
+    name: "Cluster-wide accessibility drop suggesting transport / EPC issue"
+    kpis_affected:
+      - rrc_conn_setup_sr
+      - erab_setup_sr
+    triggers:
+      - neighbour_anomalies_min: 3
+        within_minutes: 15
+        scope: "same_enb"
+    likely_cause: "Localised transport or EPC connectivity issue affecting cluster"
+    confidence: 0.70
+    suggested_actions:
+      - "Check transport ring / fibre health upstream of cluster"
+      - "Verify EPC interface utilisation and any rate-limit alarms"
+      - "Engage NOC for end-to-end path test"
+
+  - id: rca_005
+    name: "Handover failure with neighbour relation alarm"
+    kpis_affected:
+      - intra_lte_ho_sr
+    triggers:
+      - alarm_pattern: "(X2|NEIGHBOUR|HO).*(FAILURE|TIMEOUT)"
+        within_minutes: 30
+        severity_min: "minor"
+        scope: "same_enb"
+    likely_cause: "X2 link or neighbour relation issue impacting handover"
+    confidence: 0.78
+    suggested_actions:
+      - "Inspect X2 link status to target neighbour eNBs"
+      - "Verify neighbour relation table consistency"
+      - "Check for recent topology changes in surrounding area"

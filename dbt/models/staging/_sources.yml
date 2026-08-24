@@ -1,0 +1,61 @@
+version: 2
+
+sources:
+  - name: raw
+    description: "Long-format landing tables for PM, FM, CM data"
+    schema: raw
+    tables:
+      - name: pm_measurements
+        description: "Performance counters in long format, one row per (ts, cell, counter)"
+        columns:
+          - name: ts
+            description: "Measurement interval start (UTC)"
+            tests:
+              - not_null
+          - name: cell_id
+            tests:
+              - not_null
+          - name: counter_id
+            tests:
+              - not_null
+
+      - name: fm_alarms
+        description: "Fault management alarms"
+        columns:
+          - name: alarm_uid
+            tests:
+              - unique
+              - not_null
+          - name: raised_at
+            tests:
+              - not_null
+
+      - name: cm_changes
+        description: "Configuration management changes (SCD2)"
+
+  - name: dims
+    description: "Dimension tables"
+    schema: dims
+    tables:
+      - name: dim_counter
+        columns:
+          - name: counter_id
+            tests:
+              - unique
+              - not_null
+          - name: name
+            tests:
+              - unique
+              - not_null
+      - name: dim_cell
+        columns:
+          - name: cell_id
+            tests:
+              - unique
+              - not_null
+      - name: dim_enb
+        columns:
+          - name: enb_id
+            tests:
+              - unique
+              - not_null

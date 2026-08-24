@@ -1,0 +1,46 @@
+name: 'telcoscope'
+version: '0.1.0'
+config-version: 2
+
+profile: 'telcoscope'
+
+model-paths: ["models"]
+seed-paths: ["seeds"]
+test-paths: ["tests"]
+analysis-paths: ["analyses"]
+snapshot-paths: ["snapshots"]
+macro-paths: ["macros"]
+
+target-path: "target"
+clean-targets:
+  - "target"
+  - "dbt_packages"
+  - "logs"
+
+models:
+  telcoscope:
+    +materialized: view
+    staging:
+      +schema: staging
+      +materialized: view
+    intermediate:
+      +schema: intermediate
+      +materialized: ephemeral
+    marts:
+      +schema: marts
+      +materialized: table
+
+seeds:
+  telcoscope:
+    +schema: seeds
+    counter_catalog:
+      +column_types:
+        counter_id: integer
+        name: text
+        description: text
+        kpi_group: text
+        unit: text
+
+vars:
+  # Reference date — useful for incremental and freshness tests
+  reference_date: '2026-01-01'

@@ -1,0 +1,133 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint-and-test:
+    name: Lint, type-check, and test
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: timescale/timescaledb:latest-pg16
+        env:
+          POSTGRES_USER: telcoscope
+          POSTGRES_PASSWORD: telcoscope
+          POSTGRES_DB: telcoscope_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install uv
+        run: pip install uv
+
+      - name: Install dependencies
+        run: uv pip install --system -e ".[dev,dbt]"
+
+      - name: Ruff lint
+        run: ruff check src tests apps
+
+      - name: Ruff format check
+        run: ruff format --check src tests apps
+
+      - name: Mypy
+        run: mypy src
+        continue-on-error: true  # tighten over time
+
+      - name: Pytest
+        env:
+          POSTGRES_HOST: localhost
+          POSTGRES_PORT: 5432
+          POSTGRES_DB: telcoscope_test
+          POSTGRES_USER: telcoscope
+          POSTGRES_PASSWORD: telcoscope
+          NARRATOR_MODE: mock
+        run: pytest -v --cov=telcoscope --cov-report=xml
+
+      - name: Upload coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage.xml
+
+  dbt-build:
+    name: dbt build
+    runs-on: ubuntu-latest
+    needs: lint-and-test
+
+    services:
+      postgres:
+        image: timescale/timescaledb:latest-pg16
+        env:
+          POSTGRES_USER: telcoscope
+          POSTGRES_PASSWORD: telcoscope
+          POSTGRES_DB: telcoscope_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dbt
+        run: pip install dbt-core dbt-postgres
+
+      - name: Set up dbt profile
+        run: |
+          mkdir -p ~/.dbt
+          cat > ~/.dbt/profiles.yml <<EOF
+          telcoscope:
+            target: ci
+            outputs:
+              ci:
+                type: postgres
+                host: localhost
+                port: 5432
+                user: telcoscope
+                password: telcoscope
+                dbname: telcoscope_test
+                schema: dbt_ci
+                threads: 4
+          EOF
+
+      - name: dbt deps
+        working-directory: dbt
+        run: dbt deps
+
+      - name: dbt build
+        working-directory: dbt
+        run: dbt build --target ci
