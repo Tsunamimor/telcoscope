@@ -114,9 +114,12 @@ class PmMeasurement(Base):
 
 class FmAlarm(Base):
     __tablename__ = "fm_alarms"
-    __table_args__ = {"schema": "raw"}
+    __table_args__ = (
+        PrimaryKeyConstraint("alarm_uid", "raised_at"),
+        {"schema": "raw"},
+    )
 
-    alarm_uid: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    alarm_uid: Mapped[int] = mapped_column(BigInteger, autoincrement=True)
     raised_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=False)
     cleared_at: Mapped[datetime | None] = mapped_column(TIMESTAMP(timezone=True))
     enb_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
