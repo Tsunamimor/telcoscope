@@ -1,0 +1,87 @@
+version: 2
+
+models:
+  - name: mart_kpi_cell_hourly
+    description: |
+      3GPP KPI mart at (cell, hour) grain. Vendor-agnostic — the
+      counter dictionary (dim_counter) abstracts vendor-specific
+      names into logical counters used by the KPI formulas.
+
+      Refresh: full refresh on each `dbt run`. For incremental
+      loading see the intermediate model (added Day 3).
+
+      Source: 3GPP TS 32.450 (KPI definitions) and TS 32.425
+      (performance measurements).
+
+    columns:
+      - name: ts
+        description: "Hour bucket, aligned to hour boundary UTC"
+        tests:
+          - not_null
+
+      - name: cell_id
+        description: "FK to dims.dim_cell.cell_id"
+        tests:
+          - not_null
+          - relationships:
+              to: source('dims', 'dim_cell')
+              field: cell_id
+
+      # Accessibility
+      - name: rrc_conn_setup_sr
+        description: "RRC connection setup success rate (%), 0–100"
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 100
+              inclusive: true
+
+      - name: erab_setup_sr
+        description: "E-RAB establishment success rate (%), 0–100"
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 100
+              inclusive: true
+
+      # Retainability
+      - name: erab_drop_rate
+        description: "E-RAB abnormal-release rate (%), 0–100"
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 100
+              inclusive: true
+
+      # Mobility
+      - name: intra_lte_ho_sr
+        description: "Intra-LTE handover success rate (%), 0–100"
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 100
+              inclusive: true
+
+      # Integrity
+      - name: dl_user_throughput_kbps
+        description: "DL user-plane throughput per active UE second (kbps)"
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              inclusive: true
+
+      # Availability
+      - name: cell_availability_pct
+        description: "Cell availability (%), 0–100"
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 100
+              inclusive: true
+
+    tests:
+      # Composite grain uniqueness
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - ts
+            - cell_id

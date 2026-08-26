@@ -4,38 +4,71 @@ sources:
   - name: raw
     description: "Long-format landing tables for PM, FM, CM data"
     schema: raw
+
     tables:
       - name: pm_measurements
-        description: "Performance counters in long format, one row per (ts, cell, counter)"
+        description: |
+          Performance counters in long format — one row per
+          (ts, cell_id, counter_id). TimescaleDB hypertable
+          partitioned by ts with 7-day chunks.
+        loaded_at_field: ts
+        freshness:
+          warn_after: {count: 25, period: hour}
+          error_after: {count: 48, period: hour}
         columns:
           - name: ts
             description: "Measurement interval start (UTC)"
             tests:
               - not_null
           - name: cell_id
+            description: "FK to dims.dim_cell.cell_id"
             tests:
               - not_null
           - name: counter_id
+            description: "FK to dims.dim_counter.counter_id"
+            tests:
+              - not_null
+          - name: value
+            description: "Counter reading — may be NULL if not reported"
+          - name: gran_period_seconds
+            description: "Measurement granularity (typically 3600)"
             tests:
               - not_null
 
       - name: fm_alarms
-        description: "Fault management alarms"
+        description: "Fault-management alarms in long format, hypertable partitioned by raised_at."
+        loaded_at_field: raised_at
+        freshness:
+          warn_after: {count: 25, period: hour}
+          error_after: {count: 168, period: hour}   # 1 week
         columns:
           - name: alarm_uid
             tests:
-              - unique
               - not_null
           - name: raised_at
             tests:
               - not_null
+          - name: severity
+            tests:
+              - not_null
+              - accepted_values:
+                  values: ['warning', 'minor', 'major', 'critical']
 
       - name: cm_changes
-        description: "Configuration management changes (SCD2)"
+        description: "Configuration-management changes."
+        columns:
+          - name: change_uid
+            tests:
+              - unique
+              - not_null
+          - name: changed_at
+            tests:
+              - not_null
 
   - name: dims
-    description: "Dimension tables"
+    description: "Dimension tables — reference data joined by fact tables"
     schema: dims
+
     tables:
       - name: dim_counter
         columns:
@@ -47,15 +80,42 @@ sources:
             tests:
               - unique
               - not_null
+          - name: kpi_group
+            tests:
+              - accepted_values:
+                  values:
+                    - accessibility
+                    - retainability
+                    - mobility
+                    - integrity
+                    - availability
+
       - name: dim_cell
         columns:
           - name: cell_id
             tests:
               - unique
               - not_null
+          - name: cell_name
+            tests:
+              - unique
+              - not_null
+          - name: enb_id
+            tests:
+              - not_null
+              - relationships:
+                  to: source('dims', 'dim_enb')
+                  field: enb_id
+
       - name: dim_enb
         columns:
           - name: enb_id
             tests:
               - unique
               - not_null
+          - name: vendor_id
+            tests:
+              - not_null
+              - relationships:
+                  to: source('dims', 'dim_vendor')
+                  field: vendor_id
