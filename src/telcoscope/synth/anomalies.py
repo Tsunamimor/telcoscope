@@ -85,8 +85,8 @@ def default_anomaly_plan(
     # Sudden drops: 5 across the dataset, distributed randomly
     for _ in range(5):
         cell_id = rng.randint(1, num_cells)
-        day_offset = rng.randint(2, days - 2)
-        hour_offset = rng.randint(8, 22)
+        day_offset = rng.randint(0, max(0, days - 1))
+        hour_offset = rng.randint(0, 23)
         ts_start = start + timedelta(days=day_offset, hours=hour_offset)
         duration_hours = rng.choice([1, 2, 3, 4])
         kpi = rng.choice(["rrc_conn_setup_sr", "erab_drop_rate", "intra_lte_ho_sr"])
@@ -104,10 +104,16 @@ def default_anomaly_plan(
 
     # Slow drifts: 3, multi-day, more subtle
     for _ in range(3):
+        if days < 4:
+            # Too short for a meaningful multi-day drift; skip.
+            continue
         cell_id = rng.randint(1, num_cells)
-        day_offset = rng.randint(3, days - 7)
+        max_start_day = max(0, days - 4)
+        day_offset = rng.randint(0, max_start_day)
         ts_start = start + timedelta(days=day_offset)
-        duration_days = rng.choice([3, 4, 5])
+        # Duration capped so we don't run past the end of the dataset
+        duration_days = rng.choice([d for d in [3, 4, 5] if d <= days - day_offset]) \
+                        if any(d <= days - day_offset for d in [3, 4, 5]) else 1
         kpi = rng.choice(["dl_user_throughput", "intra_lte_ho_sr"])
         plan.add(
             InjectedAnomaly(
@@ -124,7 +130,7 @@ def default_anomaly_plan(
     # Correlated outage: one event affecting an eNB-sized cluster
     cluster_start_cell = rng.randint(1, max(1, num_cells - 3))
     cluster_cells = list(range(cluster_start_cell, cluster_start_cell + 3))
-    day_offset = rng.randint(5, days - 5)
+    day_offset = rng.randint(0, max(0, days - 1))
     ts_start = start + timedelta(days=day_offset, hours=14)
     for cell_id in cluster_cells:
         plan.add(
