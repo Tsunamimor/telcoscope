@@ -2,7 +2,7 @@
 
 > Vendor-agnostic 3GPP KPI observability and root-cause analysis for mobile networks.
 
-[![CI](https://github.com/YOUR-USERNAME/telcoscope/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR-USERNAME/telcoscope/actions/workflows/ci.yml)
+[![CI](https://github.com/Tsunamimor/telcoscope/actions/workflows/ci.yml/badge.svg)](https://github.com/Tsunamimor/telcoscope/actions/workflows/ci.yml)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
@@ -43,7 +43,7 @@ data model looks the way it does.
 Requires Docker, Docker Compose, and `make`. Tested on macOS, Linux, and WSL2.
 
 ```bash
-git clone https://github.com/YOUR-USERNAME/telcoscope.git
+git clone https://github.com/Tsunamimor/telcoscope.git
 cd telcoscope
 cp .env.example .env       # adjust if you want; defaults work
 make up                    # brings up Postgres+TimescaleDB, Grafana, Adminer
