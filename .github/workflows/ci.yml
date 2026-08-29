@@ -76,7 +76,7 @@ jobs:
           path: coverage.xml
 
   dbt-build:
-    name: dbt build
+    name: dbt build (full pipeline)
     runs-on: ubuntu-latest
     needs: lint-and-test
 
@@ -103,8 +103,38 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install dbt
-        run: pip install dbt-core dbt-postgres
+      - name: Install project + dbt
+        run: pip install -e ".[dev,dbt]"
+
+      - name: Initialise TimescaleDB and schemas
+        env:
+          PGPASSWORD: telcoscope
+        run: |
+          psql -h localhost -U telcoscope -d telcoscope_test -c "CREATE EXTENSION IF NOT EXISTS timescaledb CASCADE;"
+          psql -h localhost -U telcoscope -d telcoscope_test -c "CREATE SCHEMA IF NOT EXISTS raw;"
+          psql -h localhost -U telcoscope -d telcoscope_test -c "CREATE SCHEMA IF NOT EXISTS dims;"
+          psql -h localhost -U telcoscope -d telcoscope_test -c "CREATE SCHEMA IF NOT EXISTS marts;"
+          psql -h localhost -U telcoscope -d telcoscope_test -c "CREATE SCHEMA IF NOT EXISTS analytics;"
+
+      - name: Apply Alembic migrations
+        env:
+          POSTGRES_HOST: localhost
+          POSTGRES_PORT: 5432
+          POSTGRES_DB: telcoscope_test
+          POSTGRES_USER: telcoscope
+          POSTGRES_PASSWORD: telcoscope
+        run: alembic upgrade head
+
+      - name: Seed synthetic data (smaller than local — CI-friendly)
+        env:
+          POSTGRES_HOST: localhost
+          POSTGRES_PORT: 5432
+          POSTGRES_DB: telcoscope_test
+          POSTGRES_USER: telcoscope
+          POSTGRES_PASSWORD: telcoscope
+          SYNTH_NUM_CELLS: 20
+          SYNTH_DAYS: 7
+        run: python -m telcoscope.synth.generator
 
       - name: Set up dbt profile
         run: |
@@ -128,6 +158,6 @@ jobs:
         working-directory: dbt
         run: dbt deps
 
-      - name: dbt build
+      - name: dbt build (full — models + tests)
         working-directory: dbt
         run: dbt build --target ci
