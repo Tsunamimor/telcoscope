@@ -85,3 +85,50 @@ models:
           combination_of_columns:
             - ts
             - cell_id
+            
+  - name: mart_kpi_enb_hourly
+    description: |
+      Same KPIs as mart_kpi_cell_hourly, aggregated to eNB grain.
+      Aggregation is sum-of-counters-first, formula-after — never
+      average of KPIs.
+
+    columns:
+      - name: ts
+        tests:
+          - not_null
+      - name: enb_id
+        tests:
+          - not_null
+          - relationships:
+              to: source('dims', 'dim_enb')
+              field: enb_id
+      - name: num_cells
+        description: "Number of cells contributing to this row"
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 1
+              inclusive: true
+      - name: rrc_conn_setup_sr
+        tests:
+          - dbt_utils.accepted_range: {min_value: 0, max_value: 100, inclusive: true}
+      - name: erab_setup_sr
+        tests:
+          - dbt_utils.accepted_range: {min_value: 0, max_value: 100, inclusive: true}
+      - name: erab_drop_rate
+        tests:
+          - dbt_utils.accepted_range: {min_value: 0, max_value: 100, inclusive: true}
+      - name: intra_lte_ho_sr
+        tests:
+          - dbt_utils.accepted_range: {min_value: 0, max_value: 100, inclusive: true}
+      - name: dl_user_throughput_kbps
+        tests:
+          - dbt_utils.accepted_range: {min_value: 0, inclusive: true}
+      - name: cell_availability_pct
+        tests:
+          - dbt_utils.accepted_range: {min_value: 0, max_value: 100, inclusive: true}
+
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - ts
+            - enb_id
