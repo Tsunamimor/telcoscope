@@ -96,3 +96,6 @@ logs/
 
 # OS
 Thumbs.db
+
+# Editor backup files
+*.bak
