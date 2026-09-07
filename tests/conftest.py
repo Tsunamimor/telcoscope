@@ -1,7 +1,8 @@
 """Shared pytest fixtures."""
+
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 
@@ -16,7 +17,7 @@ def sample_incident() -> dict:
             "severity": "major",
             "kpi_value": 87.3,
             "baseline": 99.4,
-            "ts": datetime(2026, 5, 23, 14, 0, tzinfo=timezone.utc),
+            "ts": datetime(2026, 5, 23, 14, 0, tzinfo=UTC),
         },
         "hypotheses": [
             {
@@ -26,9 +27,7 @@ def sample_incident() -> dict:
                 "evidence": ["S1_LINK_DOWN alarm on eNB 7"],
             }
         ],
-        "alarms": [
-            {"alarm_type": "S1_LINK_DOWN", "severity": "major", "raised_at": "..."}
-        ],
+        "alarms": [{"alarm_type": "S1_LINK_DOWN", "severity": "major", "raised_at": "..."}],
         "cm_changes": [],
         "neighbour_anomalies": [],
         "cell_context": {"archetype": "urban", "enb_id": 7},

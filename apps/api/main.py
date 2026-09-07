@@ -12,6 +12,7 @@ Endpoints (v0):
 
 Full implementation lands in Week 5–6.
 """
+
 from __future__ import annotations
 
 from fastapi import FastAPI

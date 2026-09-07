@@ -1,4 +1,5 @@
 """Tests for the LLM incident narrator (mock mode only)."""
+
 from __future__ import annotations
 
 from telcoscope.narrate.llm import narrate

@@ -1,4 +1,5 @@
 """Verify the bundled RCA rule library loads and validates."""
+
 from __future__ import annotations
 
 from pathlib import Path

@@ -18,6 +18,7 @@ Pattern types:
 - ``intermittent_spike``: short, repeated spikes in a counter (ping-pong
   handover / CSL analogue).
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -112,8 +113,11 @@ def default_anomaly_plan(
         day_offset = rng.randint(0, max_start_day)
         ts_start = start + timedelta(days=day_offset)
         # Duration capped so we don't run past the end of the dataset
-        duration_days = rng.choice([d for d in [3, 4, 5] if d <= days - day_offset]) \
-                        if any(d <= days - day_offset for d in [3, 4, 5]) else 1
+        duration_days = (
+            rng.choice([d for d in [3, 4, 5] if d <= days - day_offset])
+            if any(d <= days - day_offset for d in [3, 4, 5])
+            else 1
+        )
         kpi = rng.choice(["dl_user_throughput", "intra_lte_ho_sr"])
         plan.add(
             InjectedAnomaly(

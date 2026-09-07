@@ -13,6 +13,7 @@ Has two modes, configured via ``settings.narrator_mode``:
 The mock mode is the default — the live mode is opt-in to avoid surprising
 the user with API charges.
 """
+
 from __future__ import annotations
 
 from typing import Any
@@ -20,7 +21,6 @@ from typing import Any
 from loguru import logger
 
 from telcoscope.config import settings
-
 
 SYSTEM_PROMPT = """\
 You are a mobile network operations analyst writing an incident summary for an \
@@ -46,7 +46,7 @@ def narrate(incident: dict[str, Any]) -> str:
         Structured incident record. Expected keys: ``anomaly``, ``hypotheses``,
         ``alarms``, ``cm_changes``, ``neighbour_anomalies``, ``cell_context``.
 
-    Returns
+    Returns:
     -------
     A short paragraph describing the incident for an on-call engineer.
     """
@@ -66,9 +66,7 @@ def _mock_narrate(incident: dict[str, Any]) -> str:
 
     hypotheses = incident.get("hypotheses", [])
     top_cause = hypotheses[0]["likely_cause"] if hypotheses else "no clear cause identified"
-    top_confidence = (
-        hypotheses[0].get("confidence", 0.0) if hypotheses else 0.0
-    )
+    top_confidence = hypotheses[0].get("confidence", 0.0) if hypotheses else 0.0
 
     return (
         f"[MOCK] {severity.title()} {kpi} degradation detected on cell {cell} "
@@ -82,8 +80,8 @@ def _live_narrate(incident: dict[str, Any]) -> str:
     """Live call to the Anthropic API."""
     try:
         from anthropic import Anthropic
-    except ImportError:
-        logger.warning("anthropic SDK not installed; falling back to mock")
+    except Exception as e:
+        logger.warning("Description of what silently failed: {}", e)
         return _mock_narrate(incident)
 
     client = Anthropic(api_key=settings.anthropic_api_key)
@@ -104,6 +102,7 @@ def _live_narrate(incident: dict[str, Any]) -> str:
 def _format_incident_for_prompt(incident: dict[str, Any]) -> str:
     """Render an incident dict into a human-readable prompt block."""
     import json
+
     return (
         "Incident details (JSON):\n\n"
         f"{json.dumps(incident, indent=2, default=str)}\n\n"

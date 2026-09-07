@@ -4,18 +4,19 @@ Models are grouped by logical schema (dims, raw, analytics). Marts are built
 by dbt and are deliberately not modelled here — that's the point of the
 transformation-layer separation.
 """
+
 from __future__ import annotations
 
 from datetime import datetime
 
 from sqlalchemy import (
+    TIMESTAMP,
     BigInteger,
     Double,
     ForeignKey,
     Integer,
     PrimaryKeyConstraint,
     Text,
-    TIMESTAMP,
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
@@ -26,6 +27,7 @@ class Base(DeclarativeBase):
 
 
 # --- Dimension tables (schema: dims) --------------------------------------
+
 
 class Vendor(Base):
     __tablename__ = "dim_vendor"
@@ -52,9 +54,7 @@ class Counter(Base):
     name: Mapped[str] = mapped_column(Text, unique=True, nullable=False)
     description: Mapped[str | None] = mapped_column(Text)
     kpi_group: Mapped[str | None] = mapped_column(Text)
-    vendor_id: Mapped[int | None] = mapped_column(
-        Integer, ForeignKey("dims.dim_vendor.vendor_id")
-    )
+    vendor_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("dims.dim_vendor.vendor_id"))
     vendor_counter_name: Mapped[str | None] = mapped_column(Text)
     technology_id: Mapped[int | None] = mapped_column(
         Integer, ForeignKey("dims.dim_technology.technology_id")
@@ -90,12 +90,11 @@ class Cell(Base):
     latitude: Mapped[float | None] = mapped_column(Double)
     longitude: Mapped[float | None] = mapped_column(Double)
     azimuth_deg: Mapped[float | None] = mapped_column(Double)
-    created_at: Mapped[datetime] = mapped_column(
-        TIMESTAMP(timezone=True), nullable=False
-    )
+    created_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=False)
 
 
 # --- Raw tables (schema: raw) ---------------------------------------------
+
 
 class PmMeasurement(Base):
     __tablename__ = "pm_measurements"
@@ -144,6 +143,7 @@ class CmChange(Base):
 
 
 # --- Analytics tables (schema: analytics) ----------------------------------
+
 
 class SynthTruth(Base):
     """Ground-truth labels for injected anomalies. Used to evaluate detectors."""

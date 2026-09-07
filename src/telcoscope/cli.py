@@ -2,6 +2,7 @@
 
 Run `telcoscope --help` after installing the package.
 """
+
 from __future__ import annotations
 
 import typer
@@ -19,6 +20,7 @@ console = Console()
 def version() -> None:
     """Print the installed version."""
     from telcoscope import __version__
+
     console.print(f"telcoscope v{__version__}")
 
 
@@ -30,6 +32,7 @@ def seed(
 ) -> None:
     """Generate synthetic PM/FM/CM data and load it into the database."""
     from telcoscope.synth.generator import generate_and_load
+
     generate_and_load(num_cells=cells, num_days=days, seed=seed)
 
 

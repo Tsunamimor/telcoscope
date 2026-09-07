@@ -2,6 +2,7 @@
 
 Encapsulates seasonality math and noise so `generator.py` stays readable.
 """
+
 from __future__ import annotations
 
 import math
@@ -41,4 +42,5 @@ def noise(rng: np.random.Generator, size: int, stddev: float) -> np.ndarray:
 def hourly_range(start: datetime, hours: int) -> list[datetime]:
     """Return `hours` evenly spaced datetimes starting at `start`."""
     from datetime import timedelta
+
     return [start + timedelta(hours=h) for h in range(hours)]

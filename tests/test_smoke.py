@@ -1,4 +1,5 @@
 """Smoke tests — fastest signal that the package is importable and wired up."""
+
 from __future__ import annotations
 
 

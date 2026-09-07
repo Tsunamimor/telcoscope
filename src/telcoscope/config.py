@@ -4,12 +4,12 @@ Loads from environment variables (and `.env` in the project root). All app
 modules should import `settings` from here rather than reading os.environ
 directly.
 """
+
 from __future__ import annotations
 
 from functools import lru_cache
 from typing import Literal
 
-from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 

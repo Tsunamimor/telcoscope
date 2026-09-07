@@ -3,6 +3,7 @@
 Used by ``rca.engine`` to validate ``rules.yaml`` at load time, ensuring rule
 authors can't accidentally introduce malformed rules into production.
 """
+
 from __future__ import annotations
 
 from typing import Literal

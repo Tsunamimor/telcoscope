@@ -9,6 +9,7 @@ These archetypes are intentionally stylised — they capture the *shape* of
 real-world deployment patterns without claiming to match any particular
 operator's data.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -21,7 +22,7 @@ ArchetypeName = Literal["urban_dense", "urban", "suburban", "rural"]
 class Archetype:
     """A cell deployment archetype.
 
-    Attributes
+    Attributes:
     ----------
     name:
         Identifier used in `dim_cell.archetype`.

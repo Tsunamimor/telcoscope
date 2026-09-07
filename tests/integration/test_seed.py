@@ -1,4 +1,5 @@
 """Integration test: generator runs end-to-end at small scale."""
+
 import pytest
 
 from telcoscope.synth.generator import generate
