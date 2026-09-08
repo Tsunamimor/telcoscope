@@ -90,9 +90,9 @@ def generate(
     py_rng = random.Random(seed)
 
     if start is None:
-        start = datetime.now(tz=UTC).replace(
-            hour=0, minute=0, second=0, microsecond=0
-        ) - timedelta(days=num_days)
+        start = datetime.now(tz=UTC).replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(
+            days=num_days
+        )
 
     logger.info(
         "Generating: {} cells × {} days from {} (seed={})",
