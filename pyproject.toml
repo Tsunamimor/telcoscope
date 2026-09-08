@@ -100,9 +100,13 @@ select = [
     "N",               # pep8-naming
     "D",               # pydocstyle (minimal)
 ]
+
 ignore = [
     "D100", "D104", "D107",  # missing docstrings on modules/packages/inits
     "E501",                    # line length handled by formatter
+    "D103",
+    "RUF001", "RUF002", "RUF003",   # NEW - ambiguous unicode in strings/docstrings/comments
+    "SIM108",                        # NEW - if/else vs ternary is a style preference
 ]
 
 [tool.ruff.lint.pydocstyle]
@@ -112,10 +116,11 @@ convention = "google"
 "tests/**" = ["D", "S"]
 "notebooks/**" = ["E402", "D"]
 "src/telcoscope/rca/schema.py" = ["FBT001", "FBT002"]
+"src/telcoscope/db/models.py" = ["D101", "RUF012"]
 
 # --- Mypy ---
 [tool.mypy]
-python_version = "3.11"
+python_version = "3.12"
 strict = false
 warn_return_any = true
 warn_unused_configs = true

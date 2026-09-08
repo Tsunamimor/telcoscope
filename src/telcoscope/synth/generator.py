@@ -269,7 +269,7 @@ def _generate_pm_measurements(
 
     for cell in cell_rows:
         archetype: Archetype = ARCHETYPES[cell["archetype"]]  # type: ignore[index]
-        for h_idx, ts in enumerate(timestamps):
+        for _h_idx, ts in enumerate(timestamps):
             traffic_multiplier = diurnal_factor(
                 ts.hour, archetype.diurnal_amplitude
             ) * weekly_factor(ts.weekday(), archetype.weekly_amplitude)
