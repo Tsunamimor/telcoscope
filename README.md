@@ -1,28 +1,61 @@
 # telcoscope
 
-> Vendor-agnostic 3GPP KPI observability and root-cause analysis for mobile networks.
+> Modern data engineering (dbt, TimescaleDB, GitHub Actions) applied to
+> mobile-network operations. **telcoscope** ingests vendor-native PM/FM/CM
+> telemetry, transforms it via dbt into vendor-agnostic 3GPP KPI marts, and
+> produces LLM-narrated root-cause hypotheses — all runnable locally in five
+> minutes.
 
 [![CI](https://github.com/Tsunamimor/telcoscope/actions/workflows/ci.yml/badge.svg)](https://github.com/Tsunamimor/telcoscope/actions/workflows/ci.yml)
-[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-<!-- TODO: 90-second demo screencast embedded here once Week 5 ships -->
+![Dashboard preview](docs/images/dashboard-3gpp-kpis.png)
+
+---
 
 ## Why this exists
 
-Mobile network operations teams routinely spend hours determining the root cause
-of cell-impacting degradations because performance counters live in vendor-specific
-schemas, alarm correlation is manual, and analytics tools rebuild the same KPIs
-from scratch for every new vendor introduction. `telcoscope` ingests Performance
-Management (PM), Fault Management (FM), and Configuration Management (CM) data
-into a vendor-agnostic data model, computes 3GPP-standard KPIs (Accessibility,
-Retainability, Mobility, Integrity, Availability), detects degradations using
-statistical and ML methods, attempts rule-based root-cause analysis, and emits
-actionable alerts with LLM-generated incident narratives.
+I've spent 25 years in mobile networks — most recently on 5G RAN and O-RAN
+programmes across Nordic and European operators — and have watched operations
+teams routinely spend hours root-causing cell-impacting degradations. Some
+show up as vendor-specific alarms; others as gradual KPI trends across
+counters that mean different things depending on who supplied the equipment.
+Every new vendor introduction is another cycle of rebuilding the same KPIs
+from scratch.
 
-The aim is a small but production-shaped reference implementation that operations
-teams can fork and extend, and that demonstrates current best practice for
-telecoms analytics in 2026.
+I've been extending my data engineering toolkit alongside that work — R via
+Johns Hopkins and Python via IBM specialisations — and wanted a project that
+applied modern data-stack practice to the domain I know best. **telcoscope**
+is the result.
+
+The project ingests Performance Management (PM), Fault Management (FM), and
+Configuration Management (CM) data into a vendor-agnostic long-format schema,
+transforms it via dbt into wide analytical marts covering the five 3GPP KPI
+families (Accessibility, Retainability, Mobility, Integrity, Availability),
+detects anomalies against ground-truth-labelled synthetic data, and produces
+Anthropic Claude-narrated root-cause hypotheses correlated with concurrent
+alarms and recent configuration changes. Everything runs locally via Docker
+Compose; CI runs the full pipeline on every push.
+
+**Current state (Week 2 complete):** vendor-agnostic ingestion, TimescaleDB
+storage, dbt KPI marts with source-freshness and data-contract tests,
+Grafana dashboards as code, all green in GitHub Actions.
+
+**Next:** anomaly detection (statistical baselines + Isolation Forest,
+evaluated honestly against the injection-planned ground truth), then
+rule-based root-cause analysis, then LLM narration via the Anthropic API.
+
+**Deliberately not:** a production replacement for Tier 1 operator analytics.
+Real operator scale is orders of magnitude larger, and OSS/BSS integrations
+aren't modelled. This is a *reference implementation* of the patterns —
+small enough to run on a laptop, production-shaped enough to demonstrate
+current best practice.
+
+---
+
+<sub>Built by [Paddy McPhillips](https://www.linkedin.com/in/paddymcphillips) —
+Over 25 years in mobile-network engineering, currently expanding my data engineering and analytics expertise.</sub>
 
 ## Architecture at a glance
 
