@@ -159,3 +159,21 @@ class SynthTruth(Base):
     kpi_affected: Mapped[str] = mapped_column(Text, nullable=False)
     magnitude: Mapped[float] = mapped_column(Double, nullable=False)
     description: Mapped[str | None] = mapped_column(Text)
+
+class Anomaly(Base):
+    """One detected anomaly from any detection method."""
+
+    __tablename__ = "anomalies"
+    __table_args__ = {"schema": "analytics"}
+
+    anomaly_uid: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    ts: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=False)
+    cell_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    kpi_name: Mapped[str] = mapped_column(Text, nullable=False)
+    method: Mapped[str] = mapped_column(Text, nullable=False)
+    score: Mapped[float] = mapped_column(Double, nullable=False)
+    severity: Mapped[str] = mapped_column(Text, nullable=False)
+    context: Mapped[dict | None] = mapped_column(JSONB)
+    detected_at: Mapped[datetime] = mapped_column(
+        TIMESTAMP(timezone=True), nullable=False, default=datetime.utcnow
+    )
