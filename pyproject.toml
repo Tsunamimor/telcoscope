@@ -3,7 +3,7 @@ name = "telcoscope"
 version = "0.1.0"
 description = "Vendor-agnostic 3GPP KPI observability and root-cause analysis for mobile networks"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 license = { file = "LICENSE" }
 authors = [{ name = "Paddy McPhillips" }]
 keywords = ["telecom", "kpi", "anomaly-detection", "3gpp", "lte", "5g", "rca"]
@@ -11,7 +11,6 @@ classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Telecommunications Industry",
     "License :: OSI Approved :: MIT License",
-    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Topic :: Scientific/Engineering :: Information Analysis",
 ]
