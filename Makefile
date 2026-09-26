@@ -86,3 +86,7 @@ clean:  ## Remove Python build artefacts and caches
 	find . -type d -name .ruff_cache -exec rm -rf {} +
 	find . -type d -name .mypy_cache -exec rm -rf {} +
 	rm -rf dbt/target dbt/logs dbt/dbt_packages
+
+.PHONY: detect
+detect:  ## Run all configured detectors against the current marts
+	python -m telcoscope.detect.run

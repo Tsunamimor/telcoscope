@@ -160,6 +160,7 @@ class SynthTruth(Base):
     magnitude: Mapped[float] = mapped_column(Double, nullable=False)
     description: Mapped[str | None] = mapped_column(Text)
 
+
 class Anomaly(Base):
     """One detected anomaly from any detection method."""
 

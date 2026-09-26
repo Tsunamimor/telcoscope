@@ -6,13 +6,12 @@ This decoupling means the same detector can be used in batch mode
 (evaluate against historical data) or online (append fresh detections
 periodically).
 """
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from datetime import datetime
 
 import polars as pl
-
 
 DETECTION_SCHEMA = {
     "ts": pl.Datetime(time_zone="UTC"),
@@ -20,7 +19,7 @@ DETECTION_SCHEMA = {
     "kpi_name": pl.Utf8,
     "score": pl.Float64,
     "severity": pl.Utf8,
-    "context": pl.Object,       # dict, serialised to JSONB on persist
+    "context": pl.Object,  # dict, serialised to JSONB on persist
 }
 
 
@@ -41,7 +40,7 @@ class Detector(ABC):
             ``mart_kpi_cell_hourly``. Must include ``ts``, ``cell_id``,
             and at least one KPI column.
 
-        Returns
+        Returns:
         -------
         A DataFrame conforming to :data:`DETECTION_SCHEMA`.
         """
