@@ -59,6 +59,10 @@ class Settings(BaseSettings):
             f"postgresql://{self.postgres_user}:{self.postgres_password}"
             f"@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
         )
+    @property
+    def postgres_url_libpq(self) -> str:
+        """Connection URL for raw psycopg (strips SQLAlchemy driver suffix)."""
+        return self.postgres_url.replace("+psycopg", "")        
 
 
 @lru_cache(maxsize=1)
