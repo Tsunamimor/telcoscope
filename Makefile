@@ -66,8 +66,9 @@ test:  ## Run pytest
 	pytest -v
 
 .PHONY: lint
-lint:  ## Run ruff + mypy
+lint:  ## Run ruff (check + format-check) + mypy
 	ruff check src tests apps
+	ruff format --check src tests apps
 	mypy src
 
 .PHONY: format

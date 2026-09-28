@@ -86,7 +86,7 @@ class IsolationForestDetector(Detector):
 
         if not anomalous_mask.any():
             logger.info("IF detector: no anomalies found")
-            return pl.DataFrame(schema=DETECTION_SCHEMA)      # type: ignore[arg-type]
+            return pl.DataFrame(schema=DETECTION_SCHEMA)  # type: ignore[arg-type]
 
         anomalous = clean.filter(pl.Series(anomalous_mask)).with_columns(
             pl.Series("_score", raw_scores[anomalous_mask]),
