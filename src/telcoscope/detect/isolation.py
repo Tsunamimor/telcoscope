@@ -4,11 +4,9 @@ Multivariate — considers all six KPIs jointly per (cell, hour) row.
 Uses scikit-learn's IsolationForest with hyperparameters tuned for
 telecoms KPI data (many rows per cell, seasonal, mostly-clean).
 """
+
 from __future__ import annotations
 
-from datetime import datetime
-
-import numpy as np
 import polars as pl
 from loguru import logger
 from sklearn.ensemble import IsolationForest
@@ -55,17 +53,15 @@ class IsolationForestDetector(Detector):
 
         # Filter out rows where any feature is null — IF can't handle NaN
         clean = kpis.drop_nulls(subset=_FEATURE_COLS)
-         # Cast Decimal -> Float64 so median() and downstream ops behave
-        clean = clean.with_columns(
-            [pl.col(c).cast(pl.Float64) for c in _FEATURE_COLS]
-        )
+        # Cast Decimal -> Float64 so median() and downstream ops behave
+        clean = clean.with_columns([pl.col(c).cast(pl.Float64) for c in _FEATURE_COLS])
         logger.info(
             "Dropped {} rows with null KPIs, {} remaining",
             len(kpis) - len(clean),
             len(clean),
         )
 
-        X = clean.select(_FEATURE_COLS).to_numpy()
+        X = clean.select(_FEATURE_COLS).to_numpy()  # noqa: N806
 
         logger.info(
             "Fitting IsolationForest: n_estimators={}, contamination={}",
@@ -76,14 +72,14 @@ class IsolationForestDetector(Detector):
             n_estimators=self.n_estimators,
             contamination=self.contamination,
             random_state=self.random_state,
-            n_jobs=-1,      # use all cores
+            n_jobs=-1,  # use all cores
         )
         model.fit(X)
 
         # decision_function: positive = normal, negative = anomalous
         # We invert so positive = anomalous, matching statistical convention
         raw_scores = -model.decision_function(X)
-        predictions = model.predict(X)      # 1 = normal, -1 = anomalous
+        predictions = model.predict(X)  # 1 = normal, -1 = anomalous
 
         # Filter to only the anomalous predictions
         anomalous_mask = predictions == -1
@@ -92,9 +88,7 @@ class IsolationForestDetector(Detector):
             logger.info("IF detector: no anomalies found")
             return pl.DataFrame(schema=DETECTION_SCHEMA)
 
-        anomalous = clean.filter(
-            pl.Series(anomalous_mask)
-        ).with_columns(
+        anomalous = clean.filter(pl.Series(anomalous_mask)).with_columns(
             pl.Series("_score", raw_scores[anomalous_mask]),
         )
 
@@ -115,14 +109,16 @@ class IsolationForestDetector(Detector):
             return max(distances, key=distances.get)
 
         detections = anomalous.with_columns(
-            pl.struct(_FEATURE_COLS).map_elements(
-                dominant_kpi, return_dtype=pl.Utf8
-            ).alias("kpi_name"),
+            pl.struct(_FEATURE_COLS)
+            .map_elements(dominant_kpi, return_dtype=pl.Utf8)
+            .alias("kpi_name"),
             pl.col("_score").alias("score"),
-            pl.col("_score").map_elements(
+            pl.col("_score")
+            .map_elements(
                 lambda s: score_to_severity(s, _SEVERITY_THRESHOLDS),
                 return_dtype=pl.Utf8,
-            ).alias("severity"),
+            )
+            .alias("severity"),
         )
 
         # Assemble context — record all six KPI values
@@ -130,8 +126,6 @@ class IsolationForestDetector(Detector):
             pl.struct(_FEATURE_COLS).alias("context"),
         )
 
-        result = detections.select(
-            ["ts", "cell_id", "kpi_name", "score", "severity", "context"]
-        )
+        result = detections.select(["ts", "cell_id", "kpi_name", "score", "severity", "context"])
         logger.info("IF detector: {} anomalies flagged", len(result))
         return result

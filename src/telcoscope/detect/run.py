@@ -1,4 +1,5 @@
 """Run all configured detectors against the current KPI marts."""
+
 from __future__ import annotations
 
 import polars as pl
@@ -36,9 +37,7 @@ def run_all_detectors() -> dict[str, int]:
     )
 
     # Isolation Forest (slower, ~10s)
-    if_detector = IsolationForestDetector(
-        contamination=0.02, n_estimators=200
-    )
+    if_detector = IsolationForestDetector(contamination=0.02, n_estimators=200)
     if_detections = if_detector.detect(kpis)
     results[if_detector.method_name] = persist_detections(
         if_detections, method=if_detector.method_name

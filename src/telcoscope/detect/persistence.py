@@ -1,8 +1,9 @@
 """Persist detections from any detector to analytics.anomalies."""
+
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import polars as pl
 import psycopg
@@ -23,10 +24,12 @@ def persist_detections(detections: pl.DataFrame, method: str) -> int:
         logger.info("No detections to persist")
         return 0
 
-    detected_at = datetime.now(timezone.utc)
+    detected_at = datetime.now(UTC)
 
-    with psycopg.connect(settings.postgres_url.replace("+psycopg", "")) as conn:
-        with conn.cursor() as cur:
+    with (
+        psycopg.connect(settings.postgres_url.replace("+psycopg", "")) as conn,
+        conn.cursor() as cur,
+    ):
             rows_inserted = 0
             for row in detections.iter_rows(named=True):
                 context = row.get("context")
