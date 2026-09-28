@@ -122,7 +122,7 @@ class StatisticalDetector(Detector):
 
         if not detections:
             logger.info("No outliers found across any KPI")
-            return pl.DataFrame(schema=DETECTION_SCHEMA)
+            return pl.DataFrame(schema=DETECTION_SCHEMA)      # type: ignore[arg-type]
 
         result = pl.concat(detections)
         logger.info("Statistical detector: {} outliers found", len(result))
