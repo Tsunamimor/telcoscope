@@ -1,5 +1,4 @@
 """Run one or more detectors against the current KPI marts."""
-
 from __future__ import annotations
 
 import polars as pl
@@ -13,7 +12,7 @@ from telcoscope.detect.statistical import StatisticalDetector
 
 def load_mart_kpi_cell_hourly() -> pl.DataFrame:
     """Read the KPI mart into a Polars DataFrame."""
-    with psycopg.connect(settings.postgres_url) as conn:
+    with psycopg.connect(settings.postgres_url.replace("+psycopg", "")) as conn:
         return pl.read_database(
             "SELECT * FROM dbt_dev_marts.mart_kpi_cell_hourly ORDER BY ts, cell_id",
             connection=conn,

@@ -3,9 +3,11 @@
 For each (cell, KPI) combination, score every point against a rolling
 window of same-hour-of-week values from the previous N weeks.
 """
-
 from __future__ import annotations
 
+from datetime import datetime
+
+import numpy as np
 import polars as pl
 from loguru import logger
 
@@ -77,18 +79,29 @@ class StatisticalDetector(Detector):
                 continue
 
             # For each (cell, dow, hod) group, compute median and MAD
-            baselines = scored.group_by(["cell_id", "_dow", "_hod"]).agg(
-                pl.col(kpi).median().alias("_median"),
-                (pl.col(kpi) - pl.col(kpi).median()).abs().median().alias("_mad"),
+            baselines = (
+                scored
+                .group_by(["cell_id", "_dow", "_hod"])
+                .agg(
+                    pl.col(kpi).median().alias("_median"),
+                    (pl.col(kpi) - pl.col(kpi).median())
+                        .abs().median().alias("_mad"),
+                )
             )
 
             # Join baselines back onto the raw data
-            enriched = scored.join(baselines, on=["cell_id", "_dow", "_hod"], how="left")
+            enriched = scored.join(
+                baselines, on=["cell_id", "_dow", "_hod"], how="left"
+            )
 
             # Compute modified z-score
             enriched = enriched.with_columns(
                 pl.when(pl.col("_mad") > 0)
-                .then(_MZS_CONST * (pl.col(kpi) - pl.col("_median")) / pl.col("_mad"))
+                .then(
+                    _MZS_CONST
+                    * (pl.col(kpi) - pl.col("_median"))
+                    / pl.col("_mad")
+                )
                 .otherwise(0.0)
                 .alias("_z")
             )
@@ -103,26 +116,22 @@ class StatisticalDetector(Detector):
             method_detections = outliers.with_columns(
                 pl.lit(kpi).alias("kpi_name"),
                 pl.col("_z").alias("score"),
-                pl.col("_z")
-                .map_elements(
+                pl.col("_z").map_elements(
                     lambda z: score_to_severity(z, _SEVERITY_THRESHOLDS),
                     return_dtype=pl.Utf8,
-                )
-                .alias("severity"),
-                pl.struct(
-                    [
-                        pl.col("_median").alias("baseline_median"),
-                        pl.col("_mad").alias("baseline_mad"),
-                        pl.col(kpi).alias("observed_value"),
-                    ]
-                ).alias("context"),
+                ).alias("severity"),
+                pl.struct([
+                    pl.col("_median").alias("baseline_median"),
+                    pl.col("_mad").alias("baseline_mad"),
+                    pl.col(kpi).alias("observed_value"),
+                ]).alias("context"),
             ).select(["ts", "cell_id", "kpi_name", "score", "severity", "context"])
 
             detections.append(method_detections)
 
         if not detections:
             logger.info("No outliers found across any KPI")
-            return pl.DataFrame(schema=DETECTION_SCHEMA)  # type: ignore[arg-type]
+            return pl.DataFrame(schema=DETECTION_SCHEMA)
 
         result = pl.concat(detections)
         logger.info("Statistical detector: {} outliers found", len(result))
