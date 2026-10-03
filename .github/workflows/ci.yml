@@ -136,6 +136,32 @@ jobs:
           SYNTH_DAYS: 7
         run: python -m telcoscope.synth.generator
 
+      - name: Set up dbt profile
+        run: |
+          mkdir -p ~/.dbt
+          cat > ~/.dbt/profiles.yml <<EOF
+          telcoscope:
+            target: dev
+            outputs:
+              dev:
+                type: postgres
+                host: localhost
+                port: 5432
+                user: telcoscope
+                password: telcoscope
+                dbname: telcoscope_test
+                schema: dbt_dev
+                threads: 4
+          EOF
+
+      - name: dbt deps
+        working-directory: dbt
+        run: dbt deps
+
+      - name: dbt build (KPI marts — excludes evaluation)
+        working-directory: dbt
+        run: dbt build --exclude mart_detector_evaluation
+
       - name: Run detectors
         env:
           POSTGRES_HOST: localhost
@@ -145,28 +171,6 @@ jobs:
           POSTGRES_PASSWORD: telcoscope
         run: python -m telcoscope.detect.run
 
-      - name: Set up dbt profile
-        run: |
-          mkdir -p ~/.dbt
-          cat > ~/.dbt/profiles.yml <<EOF
-          telcoscope:
-            target: ci
-            outputs:
-              ci:
-                type: postgres
-                host: localhost
-                port: 5432
-                user: telcoscope
-                password: telcoscope
-                dbname: telcoscope_test
-                schema: dbt_ci
-                threads: 4
-          EOF
-
-      - name: dbt deps
+      - name: dbt build (evaluation mart — needs anomalies)
         working-directory: dbt
-        run: dbt deps
-
-      - name: dbt build (full — models + tests)
-        working-directory: dbt
-        run: dbt build --target ci
+        run: dbt build --select mart_detector_evaluation
