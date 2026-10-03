@@ -136,6 +136,15 @@ jobs:
           SYNTH_DAYS: 7
         run: python -m telcoscope.synth.generator
 
+      - name: Run detectors
+        env:
+          POSTGRES_HOST: localhost
+          POSTGRES_PORT: 5432
+          POSTGRES_DB: telcoscope_test
+          POSTGRES_USER: telcoscope
+          POSTGRES_PASSWORD: telcoscope
+        run: python -m telcoscope.detect.run
+
       - name: Set up dbt profile
         run: |
           mkdir -p ~/.dbt

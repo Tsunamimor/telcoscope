@@ -119,3 +119,36 @@ sources:
               - relationships:
                   to: source('dims', 'dim_vendor')
                   field: vendor_id
+ 
+  - name: analytics
+    description: "Analytics tables - anomalies, incidents, truth"
+    schema: analytics
+
+    tables:
+      - name: anomalies
+        description: "Detections from any anomaly method"
+        columns:
+          - name: anomaly_uid
+            tests:
+              - unique
+              - not_null
+          - name: cell_id
+            tests:
+              - not_null
+          - name: method
+            tests:
+              - not_null
+              - accepted_values:
+                  values: ['statistical', 'isolation_forest']
+
+      - name: synth_truth
+        description: "Ground truth for injected anomalies"
+        columns:
+          - name: truth_uid
+            tests:
+              - unique
+              - not_null
+          - name: pattern_type
+            tests:
+              - accepted_values:
+                  values: ['sudden_drop', 'slow_drift', 'correlated_outage']
