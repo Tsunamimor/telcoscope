@@ -26,9 +26,9 @@ _FEATURE_COLS = [
 # the statistical detector's convention. sklearn's decision_function
 # returns positive for normal, negative for anomalous — we flip.
 _SEVERITY_THRESHOLDS = {
-    "minor": 0.05,
-    "major": 0.15,
-    "critical": 0.30,
+    "minor": 0.030,
+    "major": 0.059,
+    "critical": 0.093,
 }
 
 

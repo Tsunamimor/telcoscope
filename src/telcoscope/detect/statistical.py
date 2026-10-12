@@ -24,11 +24,14 @@ _KPIS_TO_SCORE = [
     "cell_availability_pct",
 ]
 
-# Threshold bands for severity
+# Threshold bands for severity based on score distribution percentiles (tuned by querying analytics.anomolies:
+#   minor    ≈ P50  — common detections (half the alerts)
+#   major    ≈ P90  — notable, worth looking at (top 10%)
+#   critical ≈ P99  — genuinely rare, likely real incidents (top 1%)
 _SEVERITY_THRESHOLDS = {
-    "minor": 3.5,
-    "major": 7.0,
-    "critical": 10.0,
+    "minor": 7.0,
+    "major": 50.0,
+    "critical": 300.0,
 }
 
 
