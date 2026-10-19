@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 
 GAP_THRESHOLD = timedelta(hours=2)
 
-_SEVERITY_RANK = {"minor": 1, "major": 2, "critical": 3}
+_SEVERITY_RANK = {"info": 0, "minor": 1, "major": 2, "critical": 3}
 _RANK_TO_SEVERITY = {v: k for k, v in _SEVERITY_RANK.items()}
 
 
@@ -58,7 +58,7 @@ def group_anomalies(anomalies: list[dict]) -> list[Incident]:
 
 
 def _group_to_incident(group: list[dict]) -> Incident:
-    max_rank = max(_SEVERITY_RANK[a["severity"]] for a in group)
+    max_rank = max(_SEVERITY_RANK.get(a["severity"], 0) for a in group)
     methods = tuple(sorted({a["method"] for a in group}))
     kpi_counts = Counter(a["kpi_name"] for a in group if a.get("kpi_name"))
     dominant_kpi = kpi_counts.most_common(1)[0][0] if kpi_counts else None
