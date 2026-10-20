@@ -1,4 +1,5 @@
 """End-to-end: query anomalies → group → upsert incidents."""
+
 from __future__ import annotations
 
 import psycopg

@@ -3,11 +3,12 @@
 Pure-function tests — no DB, no I/O, no fixtures. Each test builds its
 inputs inline so a failing test tells you exactly what it exercises.
 """
-from datetime import datetime, timedelta, timezone
+
+from datetime import UTC, datetime, timedelta
 
 from telcoscope.incidents.grouper import GAP_THRESHOLD, Incident, group_anomalies
 
-T0 = datetime(2026, 10, 13, 10, 0, tzinfo=timezone.utc)
+T0 = datetime(2026, 10, 13, 10, 0, tzinfo=UTC)
 
 
 def _anom(
@@ -97,7 +98,7 @@ def test_dominant_kpi_is_most_frequent():
 def test_ts_span_covers_min_to_max_regardless_of_input_order():
     anoms = [
         _anom(offset_hours=1),
-        _anom(offset_hours=0),   # out of order on purpose
+        _anom(offset_hours=0),  # out of order on purpose
         _anom(offset_hours=2),
     ]
     result = group_anomalies(anoms)

@@ -3,6 +3,7 @@
 Pure functions, no I/O. See docs/decisions/DEC-004-incidents.md for the
 grouping model (cell_id + 2h silence threshold, max-severity rollup).
 """
+
 from __future__ import annotations
 
 from collections import Counter
@@ -17,6 +18,8 @@ _RANK_TO_SEVERITY = {v: k for k, v in _SEVERITY_RANK.items()}
 
 @dataclass(frozen=True)
 class Incident:
+    """A grouped incident — time-bounded cluster of related detections on one cell."""
+
     cell_id: str
     ts_start: datetime
     ts_end: datetime

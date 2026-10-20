@@ -4,6 +4,7 @@ Idempotent on (cell_id, ts_start): rerunning the grouper on the same
 anomalies produces the same incidents at the same timestamps, so the
 upsert replaces in place rather than duplicating.
 """
+
 from __future__ import annotations
 
 import psycopg
@@ -51,7 +52,10 @@ def write_incidents(incidents: list[Incident]) -> int:
         for inc in incidents
     ]
 
-    with psycopg.connect(settings.postgres_url.replace("+psycopg", "")) as conn, conn.cursor() as cur:
+    with (
+        psycopg.connect(settings.postgres_url.replace("+psycopg", "")) as conn,
+        conn.cursor() as cur,
+    ):
         cur.executemany(_UPSERT_SQL, rows)
 
     logger.info("Persisted {} incidents", len(rows))
