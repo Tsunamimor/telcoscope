@@ -91,3 +91,7 @@ clean:  ## Remove Python build artefacts and caches
 .PHONY: detect
 detect:  ## Run all configured detectors against the current marts
 	python -m telcoscope.detect.run
+    
+.PHONY: incidents
+incidents:  ## Group detections into incidents and upsert
+	python -m telcoscope.incidents.run
