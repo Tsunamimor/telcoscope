@@ -152,3 +152,18 @@ sources:
             tests:
               - accepted_values:
                   values: ['sudden_drop', 'slow_drift', 'correlated_outage']
+                  
+      - name: incidents
+        description: "Grouped anomaly incidents produced by the Week 4 grouper"
+        columns:
+          - name: incident_id
+            tests:
+              - unique
+              - not_null
+          - name: cell_id
+            tests:
+              - not_null
+          - name: severity
+            tests:
+              - accepted_values:
+                  values: ['minor', 'major', 'critical']
