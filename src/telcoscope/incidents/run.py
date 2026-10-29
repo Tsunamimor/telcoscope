@@ -1,4 +1,5 @@
 """End-to-end: query anomalies → group → upsert incidents → notify new ones."""
+
 from __future__ import annotations
 
 import psycopg
@@ -46,7 +47,9 @@ def main() -> None:
     compression = len(anomalies) / max(len(incidents), 1)
     logger.info(
         "Grouped {} anomalies into {} incidents ({:.1f}x compression)",
-        len(anomalies), len(incidents), compression,
+        len(anomalies),
+        len(incidents),
+        compression,
     )
 
     written = write_incidents(incidents)

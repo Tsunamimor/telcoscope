@@ -1,4 +1,5 @@
 """Send incident notifications to a configurable webhook."""
+
 from __future__ import annotations
 
 import os
@@ -22,14 +23,14 @@ def notify(incident: dict[str, Any]) -> bool:
         return False
 
     payload = {
-        "incident_id":     str(incident["incident_id"]),
-        "cell_id":         incident["cell_id"],
-        "severity":        incident["severity"],
-        "ts_start":        incident["ts_start"].isoformat(),
-        "ts_end":          incident["ts_end"].isoformat(),
+        "incident_id": str(incident["incident_id"]),
+        "cell_id": incident["cell_id"],
+        "severity": incident["severity"],
+        "ts_start": incident["ts_start"].isoformat(),
+        "ts_end": incident["ts_end"].isoformat(),
         "detection_count": incident["detection_count"],
-        "methods":         incident["methods"],
-        "dominant_kpi":    incident.get("dominant_kpi"),
+        "methods": incident["methods"],
+        "dominant_kpi": incident.get("dominant_kpi"),
     }
 
     try:
