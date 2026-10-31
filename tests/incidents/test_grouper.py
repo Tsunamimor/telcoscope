@@ -12,7 +12,7 @@ T0 = datetime(2026, 10, 13, 10, 0, tzinfo=UTC)
 
 
 def _anom(
-    cell: str = "cell-1",
+    cell: int = 1001,
     offset_hours: float = 0,
     severity: str = "minor",
     method: str = "statistical",
@@ -35,7 +35,7 @@ def test_single_anomaly_produces_one_incident():
     result = group_anomalies([_anom()])
     assert len(result) == 1
     inc = result[0]
-    assert inc.cell_id == "cell-1"
+    assert inc.cell_id == 1001
     assert inc.ts_start == T0
     assert inc.ts_end == T0
     assert inc.detection_count == 1
@@ -58,10 +58,10 @@ def test_two_anomalies_beyond_gap_split_into_two_incidents():
 
 
 def test_different_cells_always_split():
-    anoms = [_anom(cell="cell-1"), _anom(cell="cell-2")]
+    anoms = [_anom(cell=1001), _anom(cell=1002)]
     result = group_anomalies(anoms)
     assert len(result) == 2
-    assert {i.cell_id for i in result} == {"cell-1", "cell-2"}
+    assert {i.cell_id for i in result} == {1001, 1002}
 
 
 def test_mixed_severity_rolls_up_to_max():
