@@ -14,7 +14,7 @@ kpi_at_start AS (
            k.cell_availability_pct
     FROM incidents i
     LEFT JOIN {{ ref('mart_kpi_cell_hourly') }} k
-      ON k.cell_id::text = i.cell_id
+      ON k.cell_id = i.cell_id
      AND k.ts = date_trunc('hour', i.ts_start)
 ),
 
@@ -28,7 +28,7 @@ baseline AS (
            AVG(k.cell_availability_pct)   AS baseline_cell_availability_pct
     FROM incidents i
     JOIN {{ ref('mart_kpi_cell_hourly') }} k
-      ON k.cell_id::text = i.cell_id
+      ON k.cell_id = i.cell_id
      AND k.ts BETWEEN i.ts_start - INTERVAL '24 hours'
                   AND i.ts_start - INTERVAL '1 hour'
     GROUP BY i.incident_id

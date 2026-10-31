@@ -104,8 +104,9 @@ sources:
             tests:
               - not_null
               - relationships:
-                  to: source('dims', 'dim_enb')
-                  field: enb_id
+                  arguments:
+                    to: source('dims', 'dim_enb')
+                    field: enb_id
 
       - name: dim_enb
         columns:
@@ -117,8 +118,9 @@ sources:
             tests:
               - not_null
               - relationships:
-                  to: source('dims', 'dim_vendor')
-                  field: vendor_id
+                  arguments:
+                    to: source('dims', 'dim_vendor')
+                    field: vendor_id
  
   - name: analytics
     description: "Analytics tables - anomalies, incidents, truth"
@@ -135,6 +137,10 @@ sources:
           - name: cell_id
             tests:
               - not_null
+              - relationships:
+                  arguments:
+                    to: source('dims', 'dim_cell')
+                    field: cell_id
           - name: method
             tests:
               - not_null
@@ -163,6 +169,10 @@ sources:
           - name: cell_id
             tests:
               - not_null
+              - relationships:
+                  arguments:
+                    to: source('dims', 'dim_cell')
+                    field: cell_id
           - name: severity
             tests:
               - accepted_values:
