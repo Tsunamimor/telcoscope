@@ -20,7 +20,7 @@ _RANK_TO_SEVERITY = {v: k for k, v in _SEVERITY_RANK.items()}
 class Incident:
     """A grouped incident — time-bounded cluster of related detections on one cell."""
 
-    cell_id: int          # was: str
+    cell_id: int  # was: str
     ts_start: datetime
     ts_end: datetime
     severity: str
