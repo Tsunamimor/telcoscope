@@ -82,7 +82,7 @@ classifier.
 
 A new table, one row per (incident_id, hypothesis_rank), with:
 
-- `incident_id` BIGINT NOT NULL REFERENCES `analytics.incidents(incident_id)` ON DELETE CASCADE
+- `incident_id` UUID NOT NULL REFERENCES `analytics.incidents(incident_id)` ON DELETE CASCADE
 - `hypothesis_rank` INT NOT NULL (1 = top)
 - `rule_id` TEXT NOT NULL — references the loaded rule's `id` field
 - `confidence` NUMERIC(5,4) NOT NULL — in [0, 1]
