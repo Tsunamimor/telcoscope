@@ -10,18 +10,27 @@
 #   name:               short human-readable description
 #   kpis_affected:      list of KPI logical names that this rule matches against
 #   triggers:           list of triggers ALL of which must hold for the rule to fire
-#     - alarm_pattern:  regex or simple string match against fm_alarms.alarm_type
+#     - type: concurrent_fm_alarm
+#       alarm_pattern:  regex or simple string match against fm_alarms.alarm_type
 #       within_minutes: time window relative to the anomaly's timestamp
 #       severity_min:   minimum alarm severity (warning|minor|major|critical)
 #       scope:          'same_cell' | 'same_enb' | 'same_region'
-#     - cm_change_within_minutes: int — fires if any CM change within this window
+#     - type: recent_cm_change
+#       cm_change_within_minutes: int — fires if any CM change within this window
 #       parameter:      optional parameter name filter
 #       scope:          'same_cell' | 'same_enb'
-#     - neighbour_anomalies_min: int — fires if ≥ N neighbour cells also anomalous
+#     - type: neighbour_cell_anomaly
+#       neighbour_anomalies_min: int — fires if ≥ N neighbour cells also anomalous
 #       within_minutes: time window
+#     - type: kpi_pattern
+#       kpi:            logical KPI name
+#       direction:      'drop' | 'spike'
+#       magnitude_pct:  minimum % change vs pre-incident baseline
+#       scope:          'same_cell'
 #   likely_cause:       short description of the suspected cause
 #   confidence:         float in [0,1] — base confidence if all triggers match
 #   suggested_actions:  list of operational steps for the on-call engineer
+#   evidence_template:  optional — Jinja-like template for the narrator (null OK)
 
 rules:
   - id: rca_001
@@ -30,7 +39,8 @@ rules:
       - rrc_conn_setup_sr
       - erab_setup_sr
     triggers:
-      - alarm_pattern: "S1.*(LINK_DOWN|FAILURE|UNAVAILABLE)"
+      - type: concurrent_fm_alarm
+        alarm_pattern: "S1.*(LINK_DOWN|FAILURE|UNAVAILABLE)"
         within_minutes: 15
         severity_min: "major"
         scope: "same_enb"
@@ -46,7 +56,8 @@ rules:
     kpis_affected:
       - erab_drop_rate
     triggers:
-      - alarm_pattern: "(BOARD|RRU|RU)_.*(FAULT|FAILURE|TEMPERATURE)"
+      - type: concurrent_fm_alarm
+        alarm_pattern: "(BOARD|RRU|RU)_.*(FAULT|FAILURE|TEMPERATURE)"
         within_minutes: 30
         severity_min: "minor"
         scope: "same_cell"
@@ -65,7 +76,8 @@ rules:
       - intra_lte_ho_sr
       - dl_user_throughput
     triggers:
-      - cm_change_within_minutes: 60
+      - type: recent_cm_change
+        cm_change_within_minutes: 60
         scope: "same_cell"
     likely_cause: "Recent configuration change may have introduced regression"
     confidence: 0.60
@@ -80,7 +92,8 @@ rules:
       - rrc_conn_setup_sr
       - erab_setup_sr
     triggers:
-      - neighbour_anomalies_min: 3
+      - type: neighbour_cell_anomaly
+        neighbour_anomalies_min: 3
         within_minutes: 15
         scope: "same_enb"
     likely_cause: "Localised transport or EPC connectivity issue affecting cluster"
@@ -95,7 +108,8 @@ rules:
     kpis_affected:
       - intra_lte_ho_sr
     triggers:
-      - alarm_pattern: "(X2|NEIGHBOUR|HO).*(FAILURE|TIMEOUT)"
+      - type: concurrent_fm_alarm
+        alarm_pattern: "(X2|NEIGHBOUR|HO).*(FAILURE|TIMEOUT)"
         within_minutes: 30
         severity_min: "minor"
         scope: "same_enb"

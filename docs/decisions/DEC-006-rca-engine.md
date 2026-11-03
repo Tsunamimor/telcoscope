@@ -74,7 +74,7 @@ back into detection and ends up competing with the detectors.
 
 The engine behaves like a retriever, not a classifier. For each
 incident it emits the top N (default 5) matching rules, each with a
-numeric confidence score computed from the rule's base weight × the
+numeric confidence score computed from the rule's base confidence × the
 evidence match strength. Operators see the ranked list; they are the
 classifier.
 
@@ -126,7 +126,7 @@ evidence_template: |
 - `kpi_pattern` — matches a specific KPI drop/spike signature on the
   incident's cell at the incident's start time
 
-**Confidence calculation.** `confidence = rule.weight * match_strength`
+**Confidence calculation.** `confidence = rule.confidence * match_strength`
 where `match_strength ∈ [0, 1]` is the trigger-specific strength
 (e.g. temporal proximity for FM/CM, correlation strength for
 neighbours). Both components clipped to [0, 1] and the product
