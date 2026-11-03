@@ -9,7 +9,7 @@ runs against the seeded data when ``analytics.incidents`` has rows.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 import psycopg
@@ -24,7 +24,6 @@ from telcoscope.rca.engine import (
 )
 from telcoscope.rca.schema import AlarmTrigger, Rule, RuleLibrary
 from telcoscope.rca.triggers.base import MatchResult
-
 
 # ---------------------------------------------------------------------
 # Rule-loading tests
@@ -80,8 +79,8 @@ def _make_rule(
 INCIDENT: dict[str, Any] = {
     "incident_id": "11111111-1111-1111-1111-111111111111",
     "cell_id": 42,
-    "ts_start": datetime(2026, 11, 1, 10, 0, tzinfo=timezone.utc),
-    "ts_end": datetime(2026, 11, 1, 10, 30, tzinfo=timezone.utc),
+    "ts_start": datetime(2026, 11, 1, 10, 0, tzinfo=UTC),
+    "ts_end": datetime(2026, 11, 1, 10, 30, tzinfo=UTC),
 }
 
 
@@ -165,9 +164,7 @@ def test_hypotheses_sorted_by_confidence_desc(monkeypatch):
 
     monkeypatch.setattr(
         "telcoscope.rca.engine.resolve",
-        lambda incident, trigger, conn: MatchResult(
-            evidence={}, strength=1.0
-        ),
+        lambda incident, trigger, conn: MatchResult(evidence={}, strength=1.0),
     )
 
     result = evaluate_incident(INCIDENT, rules, conn=None)  # type: ignore[arg-type]
@@ -177,16 +174,11 @@ def test_hypotheses_sorted_by_confidence_desc(monkeypatch):
 
 def test_top_n_truncates(monkeypatch):
     """Only the top N hypotheses are returned."""
-    rules = [
-        _make_rule(rule_id=f"r{i}", confidence=0.1 * (i + 1))
-        for i in range(10)
-    ]
+    rules = [_make_rule(rule_id=f"r{i}", confidence=0.1 * (i + 1)) for i in range(10)]
 
     monkeypatch.setattr(
         "telcoscope.rca.engine.resolve",
-        lambda incident, trigger, conn: MatchResult(
-            evidence={}, strength=1.0
-        ),
+        lambda incident, trigger, conn: MatchResult(evidence={}, strength=1.0),
     )
 
     result = evaluate_incident(INCIDENT, rules, conn=None, top_n=3)  # type: ignore[arg-type]
@@ -200,9 +192,7 @@ def test_rule_snapshot_captures_human_readable_fields(monkeypatch):
 
     monkeypatch.setattr(
         "telcoscope.rca.engine.resolve",
-        lambda incident, trigger, conn: MatchResult(
-            evidence={"alarm_uid": 99}, strength=1.0
-        ),
+        lambda incident, trigger, conn: MatchResult(evidence={"alarm_uid": 99}, strength=1.0),
     )
 
     [h] = evaluate_incident(INCIDENT, [rule], conn=None)  # type: ignore[arg-type]
@@ -238,9 +228,7 @@ def sample_incident(conn):
         )
         row = cur.fetchone()
     if row is None:
-        pytest.skip(
-            "No incidents in analytics.incidents — run `make incidents` first."
-        )
+        pytest.skip("No incidents in analytics.incidents — run `make incidents` first.")
     incident_id, cell_id, ts_start, ts_end = row
     return {
         "incident_id": str(incident_id),
