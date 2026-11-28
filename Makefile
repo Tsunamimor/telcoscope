@@ -95,3 +95,6 @@ detect:  ## Run all configured detectors against the current marts
 .PHONY: incidents
 incidents:  ## Group detections into incidents and upsert
 	python -m telcoscope.incidents.run
+.PHONY: rca
+rca:  ## Evaluate RCA rules against incidents and persist top-N hypotheses
+	python -m telcoscope.rca.run

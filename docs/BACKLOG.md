@@ -10,9 +10,9 @@
 
 | Field | Value |
 |---|---|
-| **Version** | v0.3 |
-| **Last updated** | 2026-10-28 |
-| **Current week** | 4 — Day 4 functionally complete (notifier working against Synology webhook-tester) |
+| **Version** | v0.5 |
+| **Last updated** | 2026-11-27 |
+| **Current week** | 5 — Day 2 complete (DEC-006 RCA engine shipped end-to-end on `wk5/day2-rca-engine`, 28 hypotheses firing across 4 rules on real data) |
 
 ---
 
@@ -61,34 +61,6 @@ method is boilerplate.
 - Delete the duplicated method from both subclasses.
 - No behaviour change expected — covered by the existing detector
   smoke tests.
-
----
-
-### BKL-004 — Harmonise `cell_id` type across `analytics` schema
-
-**Opened:** 2026-10-20 (Week 4 Day 3)
-**Priority:** Low — cosmetic + minor performance
-**Area:** `src/telcoscope/db` + dbt marts that join
-
-**Context.** `cell_id` is `TEXT` in `analytics.anomalies` and
-`analytics.incidents` but `BIGINT` everywhere else in the pipeline
-(`dim_cell`, `raw.pm_measurements`, `dbt_dev_marts.mart_kpi_cell_hourly`).
-Every join against KPI marts needs an explicit `::text` cast — surfaced
-in Week 4 Day 3 when `mart_incidents_timeline` failed with
-`operator does not exist: bigint = text`. Current workaround is to cast
-inside the mart SQL.
-
-**Actions when picked up:**
-- Alembic migration altering `cell_id` from `TEXT` → `BIGINT` on
-  `analytics.anomalies` and `analytics.incidents`.
-- The UNIQUE index on `analytics.incidents(cell_id, ts_start)` needs
-  drop/recreate because the key column type is changing.
-- Update `incidents/grouper.py` to emit `int` instead of `str` cell_ids
-  (currently reads them as text out of psycopg).
-- Remove the `::text` casts from `mart_incidents_timeline.sql` once the
-  types match.
-- Add a dbt relationship test on `analytics.incidents.cell_id → dim_cell.cell_id`
-  that only works once both sides are the same type.
 
 ---
 
@@ -153,6 +125,88 @@ with `UPDATE analytics.incidents SET notified_at = NULL`.
 
 ---
 
+### BKL-007 — Modernise dbt generic test syntax
+
+**Opened:** 2026-10-31 (Week 5 Day 1)
+**Priority:** Low — forward-compat, zero behaviour change today
+**Area:** `dbt/models/staging/_sources.yml`, `dbt/models/marts/_marts.yml`
+
+**Context.** dbt 1.12 emits `MissingArgumentsPropertyInGenericTestDeprecation`
+warnings for every generic test defined with top-level args instead of
+nesting them under an `arguments:` key. Current count: 21 occurrences
+across sources and marts yml files (`relationships`, `accepted_values`,
+`accepted_range`, `unique_combination_of_columns`). Four `relationships:`
+entries in `_sources.yml` were already converted in Week 5 Day 1 as
+part of BKL-004; the rest remain on the old syntax. Also surfaced
+during the BKL-004 rerun: `dim_enb.vendor_id` has a relationships test
+pointing at `source('dims', 'dim_vendor')` but `dim_vendor` is not
+declared as a source in `_sources.yml` — the test is a silent no-op
+today.
+
+**Actions when picked up:**
+- Wrap every `accepted_values:`, `accepted_range:`, `relationships:` and
+  `unique_combination_of_columns:` block in both yml files under an
+  `arguments:` key (same pattern as the 4 relationships fixes already
+  landed).
+- Register `dim_vendor` as a source under the `dims` namespace in
+  `_sources.yml` (or drop the orphan relationships test on
+  `dim_enb.vendor_id` if the mart doesn't need it).
+- Rerun `dbt test` and confirm `MissingArgumentsPropertyInGenericTestDeprecation`
+  count is 0 and no orphan-source warnings remain.
+- Low risk — no behaviour change, just syntax modernisation.
+
+---
+
+### BKL-008 — Synth generator should inject correlated RCA scenarios
+
+**Opened:** 2026-11-27 (Week 5 Day 2 close)
+**Priority:** Medium — gates meaningful RCA precision/recall evaluation
+**Area:** `src/telcoscope/synth/generator.py`, `src/telcoscope/synth/anomalies.py`, `src/telcoscope/rca/rules.yaml`
+
+**Context.** The synth generator today injects anomalies, FM alarms,
+and CM changes independently of each other. Result: when the Week 5
+Day 2 RCA engine runs across all 7077 incidents, only 28 (0.4%)
+produce any hypothesis — rca_003 (10), rca_004 (7), rca_001 (6),
+rca_005 (5). In real operator data, RCA fires on 60–80% of incidents
+because alarms / CM / KPI behaviour are causally linked to service
+degradation. Without that linkage in synth, the RCA engine's
+precision/recall is unmeasurable — we can't tell a true-positive
+hypothesis from a chance correlation.
+
+Also surfaced during diagnosis: hardware-fault rule `rca_002` has
+**zero matches** because the synth vocabulary is `TEMPERATURE_HIGH`
+and `VSWR_MINOR`, not the `BOARD_*` / `RRU_*` / `RU_*` prefixes the
+rule regex expects. Similarly FM alarm total (436) is ~7× lower than
+HLD §7 claims ("~100/day for 100 cells" = ~3000 expected), and CM
+changes stop ~1 day before the latest incident (42 total, latest
+`2026-08-24`).
+
+**Actions when picked up:**
+- Extend the generator with three scenario classes, each labelled in
+  `synth_truth` so detector AND RCA precision/recall can both be
+  measured against ground truth:
+  - **Transport-fault scenario** — inject an `S1_LINK_DOWN` /
+    `S1_FAILURE` alarm at major+ severity, then a correlated
+    accessibility drop (RRC/ERAB setup SR) on the same eNB cluster
+    within 2–15 minutes.
+  - **Hardware-fault scenario** — inject a `BOARD_FAULT` /
+    `RRU_FAILURE` / `RU_TEMPERATURE` alarm at minor+ severity, then
+    an availability drop on the single affected cell within ~0 min.
+  - **Config-regression scenario** — inject a CM change on a
+    parameter known to affect a specific KPI, then a KPI drop on
+    the same cell within 60 minutes.
+- Widen hardware alarm vocabulary (`BOARD_*`, `RRU_*`, `RU_*`) so
+  `rca_002` has matching inputs.
+- Raise FM alarm volume closer to the HLD §7 target (~100/day/100
+  cells).
+- Extend CM change generation to cover the full synthetic window.
+- Target: after regeneration, RCA engine fires on >= 30% of
+  non-info incidents, and `mart_detector_evaluation` gains an RCA
+  equivalent (`mart_rca_evaluation`) comparing the ranked
+  hypotheses against the injected scenario labels.
+
+---
+
 ## 2. Recently closed
 
 ### CLS-001 — Alembic migration path corrected
@@ -187,6 +241,29 @@ distribution flipped to a textbook ~50% minor / ~40% major / ~1%
 critical. IF's wider info bucket (~75%) is now documented as
 intentional in **DEC-005** — IF deliberately uses a tighter minor
 threshold to preserve its precision role, not an oversight to be fixed.
+
+### CLS-005 — cell_id type harmonisation (was BKL-004)
+
+Closed 2026-10-31 (Week 5 Day 1). `cell_id` was `TEXT` in
+`analytics.anomalies` and `analytics.incidents` but `BIGINT` everywhere
+else, forcing an explicit `::text` cast on every join against KPI marts
+(surfaced in `mart_incidents_timeline` on Week 4 Day 3). Alembic
+migration `cce4fb944f55_harmonise_cell_id_to_bigint_on_analytics_tables.py`
+alters both columns to `BIGINT`, drops/recreates the dependent dbt
+marts (`mart_detector_evaluation` as a table, `mart_incidents_timeline`
+as a view) and the `uq_incidents_cell_ts_start` unique index. The
+`::text` casts in `mart_incidents_timeline.sql` were removed, the
+`Incident` dataclass in `grouper.py` now uses `cell_id: int`, grouper
+tests were updated to pass int cell_ids (11/11 pass, 100% coverage),
+and two new `relationships` tests were added in `_sources.yml`
+guarding `analytics.anomalies.cell_id` and `analytics.incidents.cell_id`
+against `dim_cell.cell_id` — both pass, locking the type in place.
+Gotcha found during rollout: `mart_detector_evaluation` is materialised
+as a dbt **table**, not a view, so `DROP VIEW IF EXISTS` fails on it —
+the migration uses `DROP TABLE IF EXISTS` for that one and `DROP VIEW
+IF EXISTS` for `mart_incidents_timeline`. Follow-on backlog item
+**BKL-007** opened for the project-wide dbt generic test syntax
+modernisation that surfaced during the same work.
 
 ---
 
