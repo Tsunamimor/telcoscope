@@ -46,7 +46,6 @@ _INCIDENT_QUERY = """
 
 def main() -> int:
     """Run the RCA pipeline end-to-end. Returns a process exit code."""
-
     rules_path_env = os.getenv("RCA_RULES_PATH", "").strip()
     rules_path: Path | None = Path(rules_path_env) if rules_path_env else None
     top_n = int(os.getenv("RCA_TOP_N", str(DEFAULT_TOP_N)))
