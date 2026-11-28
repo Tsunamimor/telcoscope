@@ -51,9 +51,7 @@ def main() -> int:
     top_n = int(os.getenv("RCA_TOP_N", str(DEFAULT_TOP_N)))
     severities = [
         s.strip()
-        for s in os.getenv(
-            "RCA_INCIDENT_SEVERITY_FILTER", "minor,major,critical"
-        ).split(",")
+        for s in os.getenv("RCA_INCIDENT_SEVERITY_FILTER", "minor,major,critical").split(",")
         if s.strip()
     ]
     max_incidents = int(os.getenv("RCA_MAX_INCIDENTS", "0"))
@@ -89,9 +87,7 @@ def main() -> int:
                 "severity": severity,
             }
 
-            hypotheses = evaluate_incident(
-                incident, library, conn, top_n=top_n
-            )
+            hypotheses = evaluate_incident(incident, library, conn, top_n=top_n)
             persist_hypotheses(incident_id, hypotheses, conn)
 
             processed += 1
